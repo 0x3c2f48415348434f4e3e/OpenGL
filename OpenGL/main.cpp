@@ -41,19 +41,33 @@ int main(void) {
 	//call back
 	glfwSetFramebufferSizeCallback(window, windowRestCallback);
 
-	//create our vertext data
+	/*//create our vertext data
 	float vertextPosition[9] = {
 		0.0f,0.5f,0.0f,
 		-0.5f,0.0f,0.0f,
 		0.5f,0.0f,0.0f
 
+	};*/
+
+	//Draw a rectangle using triangle
+	float vertextPosition[12] = {
+		-0.5f,0.5f,0.0f,
+		0.5f,0.5f,0.0f,
+		-0.5f,-0.5f,0.0f,
+		0.5f,-0.5f,0.0f
+	};
+
+	unsigned int indices[] = {
+		0,1,2,
+		1,2,3
 	};
 
 	//create vertex buffer object andd vertext Array object
-	unsigned int VBO, VAO;
+	unsigned int VBO, VAO, EBO;
 	//generate buffers
 	glGenBuffers(1, &VBO);
 	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &EBO);
 	glBindVertexArray(VAO);
 
 	//bind buffer
@@ -61,9 +75,16 @@ int main(void) {
 	//populate buffer
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertextPosition), vertextPosition, GL_STATIC_DRAW);
 
+	//bind Element Buffer Object
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+	//we will nout unbine the EBO as VAO ia active
+
 	//configure vertex pointer
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (const void*)0);
 	glEnableVertexAttribArray(0);
+
 	//after configuring vertex buffer, unbind Vertex Array Object
 	//unubind buffer object too
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -140,15 +161,19 @@ int main(void) {
 	//user shaders
 	glUseProgram(program);
 	//rendering loop
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	while (!glfwWindowShouldClose(window)) {
 		//clear color buffer
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		//glDrawArrays(GL_TRIANGLES, 0, 3);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
+	glBindVertexArray(0);
 
 	//free resources like buffers and the programs generated
 	glDeleteVertexArrays(1, &VAO);
