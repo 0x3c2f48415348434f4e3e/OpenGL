@@ -150,6 +150,10 @@ int main(void) {
 		glfwPollEvents();
 	}
 
+	//free resources like buffers and the programs generated
+	glDeleteVertexArrays(1, &VAO);
+	glDeleteBuffers(1, &VBO);
+	glDeleteProgram(program);
 	glfwTerminate();
 
 }
