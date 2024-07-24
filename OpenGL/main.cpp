@@ -50,34 +50,33 @@ int main(void) {
 	};*/
 
 	//Draw a rectangle using triangle
-	float vertextPosition[12] = {
-		-0.5f,0.5f,0.0f,
-		0.5f,0.5f,0.0f,
-		-0.5f,-0.5f,0.0f,
-		0.5f,-0.5f,0.0f
+	float vertextPosition[] = {
+		//order for a single triangle does not matter, but for miltiple, it does
+		-0.45f,0.5f,0.0f,
+		-0.2f,-0.5f,0.0f,
+		-0.9f,-0.5f,0.0f,
+
+		//order for a single triangle does not matter, but for miltiple, it does
+		0.45f,0.5f,0.0f,
+		0.2f,-0.5f,0.0f,
+		0.9f,-0.5f,0.0f
+
 	};
 
-	unsigned int indices[] = {
-		0,1,2,
-		1,2,3
-	};
+
 
 	//create vertex buffer object andd vertext Array object
-	unsigned int VBO, VAO, EBO;
+	unsigned int VBO, VAO, VB02, VAO2;
 	//generate buffers
 	glGenBuffers(1, &VBO);
+
 	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &EBO);
 	glBindVertexArray(VAO);
 
 	//bind buffer
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	//populate buffer
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertextPosition), vertextPosition, GL_STATIC_DRAW);
-
-	//bind Element Buffer Object
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
 	//we will nout unbine the EBO as VAO ia active
 
@@ -156,8 +155,9 @@ int main(void) {
 	glDeleteShader(fragmentShaderCompile);
 
 
-	//enable VAO
+	//bind VAO
 	glBindVertexArray(VAO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	//user shaders
 	glUseProgram(program);
 	//rendering loop
@@ -168,11 +168,12 @@ int main(void) {
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		//glDrawArrays(GL_TRIANGLES, 0, 3);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
+	//unbind VAO after rendering
 	glBindVertexArray(0);
 
 	//free resources like buffers and the programs generated
