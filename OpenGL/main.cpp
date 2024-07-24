@@ -123,11 +123,19 @@ int main(void) {
 		"out vec4 FragColor;\n"
 		"void main()\n"
 		"{\n"
-		"FragColor = vec4(1.0f,1.0f,1.0f,1.0f);\n"
+		"FragColor = vec4(1.0f,0.0f,0.0f,1.0f);\n"
+		"}\n\0";
+
+	const char* fragmentShader2 = "#version 330 core\n"
+		"out vec4 FragColor2;\n"
+		"void main()\n"
+		"{\n"
+		"FragColor2 = vec4(0.0f,1.0f,1.0f,1.0f);\n"
 		"}\n\0";
 	//compile shader and link them
 	unsigned int vertexShaderCompile = glCreateShader(GL_VERTEX_SHADER);
 	unsigned int fragmentShaderCompile = glCreateShader(GL_FRAGMENT_SHADER);
+	unsigned int fragmentShaderCompile2 = glCreateShader(GL_FRAGMENT_SHADER);
 	//add shader source code into object
 	glShaderSource(vertexShaderCompile, 1, &vertexShader, NULL);
 	//compile vertex shader
@@ -149,13 +157,26 @@ int main(void) {
 	glGetShaderiv(fragmentShaderCompile, GL_COMPILE_STATUS, &success);
 	if (!success) {
 		glGetShaderInfoLog(fragmentShaderCompile, MESSAGE, NULL, INFO);
-		printf("Unable to compile Vertex shader... Error %s", INFO);
+		printf("Unable to compile fragment shader... Error %s", INFO);
 		exit(-1);
 	}
+
+	//add second fragment
+	glShaderSource(fragmentShaderCompile2, 1, &fragmentShader2, NULL);
+	glCompileShader(fragmentShaderCompile2);
+
+	glGetShaderiv(fragmentShaderCompile2, GL_COMPILE_STATUS, &success);
+	if (!success) {
+		glGetShaderInfoLog(fragmentShaderCompile2, MESSAGE, NULL, INFO);
+		printf("Unable to compiler fragment Shader... Error: %s", INFO);
+		exit(-1);
+	}
+
 
 	//if vertex and fragment shader succesfull, link shader
 	//create program first
 	unsigned int program = glCreateProgram();
+	unsigned int program2 = glCreateProgram();
 	//attach compiled programs
 	glAttachShader(program, vertexShaderCompile);
 	glAttachShader(program, fragmentShaderCompile);
@@ -166,35 +187,47 @@ int main(void) {
 	glGetProgramiv(program, GL_LINK_STATUS, &success);
 	if (!success) {
 		glGetProgramInfoLog(program, MESSAGE, NULL, INFO);
-		printf("Unable to compile Vertex shader... Error %s", INFO);
+		printf("Unable to Link shaders... Error %s", INFO);
 		exit(-1);
 	}
 
-	//if program successfully linked, delete shaders
-	glDeleteShader(vertexShaderCompile);
-	glDeleteShader(fragmentShaderCompile);
+	//create second program
+	//attach program
+	glAttachShader(program2, vertexShaderCompile);
+	glAttachShader(program2, fragmentShaderCompile2);
 
-	//user shaders
-	glUseProgram(program);
+	//Link shader
+	glLinkProgram(program2);
+	glGetProgramiv(program2, GL_LINK_STATUS, &success);
+	if (!success) {
+		glGetProgramInfoLog(program2, MESSAGE, NULL, INFO);
+		printf("Unable to Link shaders... Error %s", INFO);
+		exit(-1);
+	}
+
 	//rendering loop
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	while (!glfwWindowShouldClose(window)) {
 		//clear color buffer
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
+		//user first program
+		glUseProgram(program);
 		glBindVertexArray(VAO);
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 		//unbindd after
-		glBindVertexArray(VAO);
+		glBindVertexArray(0);
 
+		//use second program
+		glUseProgram(program2);
 		glBindVertexArray(VAO2);
 		glBindBuffer(GL_ARRAY_BUFFER, VBO2);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 		//unbindd after
-		glBindVertexArray(VAO);
+		glBindVertexArray(0);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -207,7 +240,11 @@ int main(void) {
 	glDeleteBuffers(1, &VBO);
 	glDeleteVertexArrays(1, &VAO2);
 	glDeleteBuffers(1, &VBO2);
+	//if program successfully linked, delete shaders
+	glDeleteShader(vertexShaderCompile);
+	glDeleteShader(fragmentShaderCompile);
 	glDeleteProgram(program);
+	glDeleteProgram(program2);
 	glfwTerminate();
 
 }
