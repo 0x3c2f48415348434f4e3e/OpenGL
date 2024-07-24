@@ -56,21 +56,28 @@ int main(void) {
 		-0.2f,-0.5f,0.0f,
 		-0.9f,-0.5f,0.0f,
 
+	};
+
+	float vertextPosition2[] = {
 		//order for a single triangle does not matter, but for miltiple, it does
-		0.45f,0.5f,0.0f,
-		0.2f,-0.5f,0.0f,
-		0.9f,-0.5f,0.0f
+		0.45f, 0.5f, 0.0f,
+		0.2f, -0.5f, 0.0f,
+		0.9f, -0.5f, 0.0f
 
 	};
 
 
 
 	//create vertex buffer object andd vertext Array object
-	unsigned int VBO, VAO, VB02, VAO2;
+	unsigned int VBO, VAO, VBO2, VAO2;
 	//generate buffers
 	glGenBuffers(1, &VBO);
+	glGenBuffers(1, &VBO2);
 
 	glGenVertexArrays(1, &VAO);
+	glGenVertexArrays(1, &VAO2);
+
+	//First stuff here
 	glBindVertexArray(VAO);
 
 	//bind buffer
@@ -86,10 +93,23 @@ int main(void) {
 
 	//after configuring vertex buffer, unbind Vertex Array Object
 	//unubind buffer object too
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 
+	//second stuff here
+	//bind VAO
+	glBindVertexArray(VAO2);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO2);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertextPosition2), vertextPosition2, GL_STATIC_DRAW);
+
+	//configure vertex pointer
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (const void*)0);
+	glEnableVertexAttribArray(0);
+
+	//unbinie VAO and VBO
+	glBindVertexArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	//set up shader, start with vertex shader
 	const char* vertexShader = "#version 330 core\n"
 		"layout (location = 0) in vec3 aPos;\n"
@@ -154,10 +174,6 @@ int main(void) {
 	glDeleteShader(vertexShaderCompile);
 	glDeleteShader(fragmentShaderCompile);
 
-
-	//bind VAO
-	glBindVertexArray(VAO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	//user shaders
 	glUseProgram(program);
 	//rendering loop
@@ -168,7 +184,17 @@ int main(void) {
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(VAO);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+		//unbindd after
+		glBindVertexArray(VAO);
+
+		glBindVertexArray(VAO2);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO2);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+		//unbindd after
+		glBindVertexArray(VAO);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -179,6 +205,8 @@ int main(void) {
 	//free resources like buffers and the programs generated
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
+	glDeleteVertexArrays(1, &VAO2);
+	glDeleteBuffers(1, &VBO2);
 	glDeleteProgram(program);
 	glfwTerminate();
 

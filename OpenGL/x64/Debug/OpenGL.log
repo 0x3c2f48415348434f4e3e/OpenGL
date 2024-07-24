@@ -1,4 +1,2 @@
 ﻿  main.cpp
-D:\OpenGL\OpenGL\main.cpp(69,31): warning C4101: 'VAO2': unreferenced local variable
-D:\OpenGL\OpenGL\main.cpp(69,25): warning C4101: 'VB02': unreferenced local variable
   OpenGL.vcxproj -> D:\OpenGL\x64\Debug\OpenGL.exe
