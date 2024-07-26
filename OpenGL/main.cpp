@@ -53,9 +53,10 @@ int main(void) {
 	//Draw a rectangle using triangle
 	float vertextPosition[] = {
 		//order for a single triangle does not matter, but for miltiple, it does
-		-0.45f,0.5f,0.0f,
-		-0.2f,-0.5f,0.0f,
-		-0.9f,-0.5f,0.0f,
+		//lets add a color attribe
+		-0.45f,0.5f,0.0f,1.0f,0.0f,0.0f,
+		-0.2f,-0.5f,0.0f,0.0f,1.0f,0.0f,
+		-0.9f,-0.5f,0.0f,0.0f,0.0f,1.0f
 
 	};
 
@@ -78,10 +79,12 @@ int main(void) {
 
 	//we will nout unbine the EBO as VAO ia active
 
-	//configure vertex pointer
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (const void*)0);
+	//configure vertex pointer to be used for Vertex shader
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (const void*)0);
 	glEnableVertexAttribArray(0);
 
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (const void*) (3*sizeof(float)));
+	glEnableVertexAttribArray(1);
 	//after configuring vertex buffer, unbind Vertex Array Object
 	//unubind buffer object too
 	glBindVertexArray(0);
@@ -90,18 +93,21 @@ int main(void) {
 	//set up shader, start with vertex shader
 	const char* vertexShader = "#version 330 core\n"
 		"layout (location = 0) in vec3 aPos;\n"
+		"layout (location = 1) in vec3 colorPos;\n"
+		"out vec3 aColor;"
 		"void main()\n"
 		"{\n"
 		"gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+		"aColor = colorPos;\n"
 		"}\n\0";
 	
 	//fragment shader
 	const char* fragmentShader = "#version 330 core\n"
 		"out vec4 FragColor;\n"
-		"uniform vec4 changingGreen;\n"
+		"in vec3 aColor;\n"
 		"void main()\n"
 		"{\n"
-		"FragColor = changingGreen;\n"
+		"FragColor = vec4(aColor,1.0f);\n"
 		"}\n\0";
 	//compile shader and link them
 	unsigned int vertexShaderCompile = glCreateShader(GL_VERTEX_SHADER);
@@ -160,16 +166,6 @@ int main(void) {
 
 		//user first program
 		glUseProgram(program);
-		//before using uniform use the program
-		float time = glfwGetTime();
-		//to ensure we get range between 0.0 and 1.0 (becase sin(x) gives -1,0,1) we will have
-		//to do a simple calculation
-		float calculateTimeToUseForGreen = (sin(time) / 2) + 0.5;
-		//find the location where our uniform is
-		int vertexColorLocation = glGetUniformLocation(program, "changingGreen");
-		//do some error checks
-		//update the actual uniform
-		glUniform4f(vertexColorLocation, 0.0f, calculateTimeToUseForGreen, 0.0f, 1.0f);
 		glBindVertexArray(VAO);
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
