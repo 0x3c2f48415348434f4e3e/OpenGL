@@ -2,6 +2,7 @@
 #include<glfw3.h>
 #include<stdio.h>
 #include<stdlib.h>
+#include<math.h>
 
 #define MESSAGE 1028
 void windowRestCallback(GLFWwindow* window, int x, int y);
@@ -58,24 +59,14 @@ int main(void) {
 
 	};
 
-	float vertextPosition2[] = {
-		//order for a single triangle does not matter, but for miltiple, it does
-		0.45f, 0.5f, 0.0f,
-		0.2f, -0.5f, 0.0f,
-		0.9f, -0.5f, 0.0f
-
-	};
-
 
 
 	//create vertex buffer object andd vertext Array object
-	unsigned int VBO, VAO, VBO2, VAO2;
+	unsigned int VBO, VAO;
 	//generate buffers
 	glGenBuffers(1, &VBO);
-	glGenBuffers(1, &VBO2);
 
 	glGenVertexArrays(1, &VAO);
-	glGenVertexArrays(1, &VAO2);
 
 	//First stuff here
 	glBindVertexArray(VAO);
@@ -96,49 +87,26 @@ int main(void) {
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-
-	//second stuff here
-	//bind VAO
-	glBindVertexArray(VAO2);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO2);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertextPosition2), vertextPosition2, GL_STATIC_DRAW);
-
-	//configure vertex pointer
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (const void*)0);
-	glEnableVertexAttribArray(0);
-
-	//unbinie VAO and VBO
-	glBindVertexArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	//set up shader, start with vertex shader
 	const char* vertexShader = "#version 330 core\n"
 		"layout (location = 0) in vec3 aPos;\n"
-		"out vec4 toFragment;\n"
 		"void main()\n"
 		"{\n"
-		"toFragment = vec4(0.0f,1.0f,0.0f,1.0f);\n"
 		"gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
 		"}\n\0";
 	
 	//fragment shader
 	const char* fragmentShader = "#version 330 core\n"
 		"out vec4 FragColor;\n"
-		"in vec4 toFragment;\n"
+		"uniform vec4 changingGreen;\n"
 		"void main()\n"
 		"{\n"
-		"FragColor = toFragment;\n"
-		"}\n\0";
-	//vec4(1.0f,0.0f,0.0f,1.0f);\n
-	const char* fragmentShader2 = "#version 330 core\n"
-		"out vec4 FragColor2;\n"
-		"void main()\n"
-		"{\n"
-		"FragColor2 = vec4(0.0f,1.0f,1.0f,1.0f);\n"
+		"FragColor = changingGreen;\n"
 		"}\n\0";
 	//compile shader and link them
 	unsigned int vertexShaderCompile = glCreateShader(GL_VERTEX_SHADER);
 	unsigned int fragmentShaderCompile = glCreateShader(GL_FRAGMENT_SHADER);
-	unsigned int fragmentShaderCompile2 = glCreateShader(GL_FRAGMENT_SHADER);
+
 	//add shader source code into object
 	glShaderSource(vertexShaderCompile, 1, &vertexShader, NULL);
 	//compile vertex shader
@@ -164,22 +132,10 @@ int main(void) {
 		exit(-1);
 	}
 
-	//add second fragment
-	glShaderSource(fragmentShaderCompile2, 1, &fragmentShader2, NULL);
-	glCompileShader(fragmentShaderCompile2);
-
-	glGetShaderiv(fragmentShaderCompile2, GL_COMPILE_STATUS, &success);
-	if (!success) {
-		glGetShaderInfoLog(fragmentShaderCompile2, MESSAGE, NULL, INFO);
-		printf("Unable to compiler fragment Shader... Error: %s", INFO);
-		exit(-1);
-	}
-
 
 	//if vertex and fragment shader succesfull, link shader
 	//create program first
 	unsigned int program = glCreateProgram();
-	unsigned int program2 = glCreateProgram();
 	//attach compiled programs
 	glAttachShader(program, vertexShaderCompile);
 	glAttachShader(program, fragmentShaderCompile);
@@ -194,20 +150,6 @@ int main(void) {
 		exit(-1);
 	}
 
-	//create second program
-	//attach program
-	glAttachShader(program2, vertexShaderCompile);
-	glAttachShader(program2, fragmentShaderCompile2);
-
-	//Link shader
-	glLinkProgram(program2);
-	glGetProgramiv(program2, GL_LINK_STATUS, &success);
-	if (!success) {
-		glGetProgramInfoLog(program2, MESSAGE, NULL, INFO);
-		printf("Unable to Link shaders... Error %s", INFO);
-		exit(-1);
-	}
-
 	//rendering loop
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -218,16 +160,18 @@ int main(void) {
 
 		//user first program
 		glUseProgram(program);
+		//before using uniform use the program
+		float time = glfwGetTime();
+		//to ensure we get range between 0.0 and 1.0 (becase sin(x) gives -1,0,1) we will have
+		//to do a simple calculation
+		float calculateTimeToUseForGreen = (sin(time) / 2) + 0.5;
+		//find the location where our uniform is
+		int vertexColorLocation = glGetUniformLocation(program, "changingGreen");
+		//do some error checks
+		//update the actual uniform
+		glUniform4f(vertexColorLocation, 0.0f, calculateTimeToUseForGreen, 0.0f, 1.0f);
 		glBindVertexArray(VAO);
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
-		//unbindd after
-		glBindVertexArray(0);
-
-		//use second program
-		glUseProgram(program2);
-		glBindVertexArray(VAO2);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO2);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 		//unbindd after
 		glBindVertexArray(0);
@@ -241,13 +185,11 @@ int main(void) {
 	//free resources like buffers and the programs generated
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
-	glDeleteVertexArrays(1, &VAO2);
-	glDeleteBuffers(1, &VBO2);
+
 	//if program successfully linked, delete shaders
 	glDeleteShader(vertexShaderCompile);
 	glDeleteShader(fragmentShaderCompile);
 	glDeleteProgram(program);
-	glDeleteProgram(program2);
 	glfwTerminate();
 
 }
