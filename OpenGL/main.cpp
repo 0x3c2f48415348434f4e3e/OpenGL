@@ -113,19 +113,22 @@ int main(void) {
 	//set up shader, start with vertex shader
 	const char* vertexShader = "#version 330 core\n"
 		"layout (location = 0) in vec3 aPos;\n"
+		"out vec4 toFragment;\n"
 		"void main()\n"
 		"{\n"
+		"toFragment = vec4(0.0f,1.0f,0.0f,1.0f);\n"
 		"gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
 		"}\n\0";
 	
 	//fragment shader
 	const char* fragmentShader = "#version 330 core\n"
 		"out vec4 FragColor;\n"
+		"in vec4 toFragment;\n"
 		"void main()\n"
 		"{\n"
-		"FragColor = vec4(1.0f,0.0f,0.0f,1.0f);\n"
+		"FragColor = toFragment;\n"
 		"}\n\0";
-
+	//vec4(1.0f,0.0f,0.0f,1.0f);\n
 	const char* fragmentShader2 = "#version 330 core\n"
 		"out vec4 FragColor2;\n"
 		"void main()\n"
